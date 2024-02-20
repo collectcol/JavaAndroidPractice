@@ -7,13 +7,14 @@
     android:orientation="vertical"
     tools:actionBarNavMode="list"
     tools:context=".MainActivity"
+    android:visibility="visible"
     android:id="@+id/baseLayout">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="오른쪽 위 메뉴 버튼을 누루세요"/>
+        android:text="오른쪽 위 메뉴 버튼을 누르세요"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

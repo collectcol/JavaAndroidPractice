@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setTitle("배경색 바꾸기");
+        getSupportActionBar().show();
         baseLayout = ( LinearLayout ) findViewById(R.id.baseLayout);
         button1 = ( Button ) findViewById(R.id.button1);
     }
