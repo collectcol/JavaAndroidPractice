@@ -1,0 +1,12 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.ActionBar_Tabs_Ex" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
+
+    <style name="Theme.ActionBar_Tabs_Ex" parent="Base.Theme.ActionBar_Tabs_Ex" />
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
+        <!-- 다른 스타일 속성들 -->
+    </style>
+</resources>
