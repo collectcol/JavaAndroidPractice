@@ -15,4 +15,5 @@
     </style>
 
     <style name="Theme.GoogleMaps_Ex" parent="Base.Theme.GoogleMaps_Ex" />
+    <style name="them" parent="Theme.AppCompat"/>
 </resources>
