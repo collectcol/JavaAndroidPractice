@@ -2,31 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/navigation_name"
+        android:id="@+id/roots"
         android:title="현재 루트"
-
-        app:showAsAction="always"/>
-
-    <item
-        android:id="@+id/action_space1"
-        android:title="            "
-        android:orderInCategory="101"
-        app:showAsAction="always"
-        android:visible="true"
-        android:enabled="false"/>
+        app:showAsAction="always">
+    </item>
 
     <item
-        android:id="@+id/navigation_name2"
+        android:id="@+id/root_add"
         android:title="추가"
         app:showAsAction="always"/>
-
-    <item
-        android:id="@+id/action_space2"
-        android:title="                   "
-        android:orderInCategory="101"
-        app:showAsAction="always"
-        android:visible="true"
-        android:enabled="false"/>
 
     <item
         android:id="@+id/settings"
