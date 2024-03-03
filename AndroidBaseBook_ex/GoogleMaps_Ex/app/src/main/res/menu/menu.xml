@@ -9,7 +9,7 @@
 
     <item
         android:id="@+id/root_add"
-        android:title="추가"
+        android:title="루트 추가"
         app:showAsAction="always"/>
 
     <item
