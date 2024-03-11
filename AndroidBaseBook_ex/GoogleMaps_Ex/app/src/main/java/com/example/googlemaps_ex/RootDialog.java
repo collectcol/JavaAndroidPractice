@@ -21,6 +21,7 @@ public class RootDialog
     private int mDialogHeight;
     private ArrayList<String> dataList;
     private DialogListener listener;
+    private AlertDialog dialog;
 
     public RootDialog(Context context, int height)
     {
@@ -64,11 +65,26 @@ public class RootDialog
                 if ( listener != null )
                 {
                     listener.onItemClick(selectedItem);
+                    dismissDialog();
                 }
             }
         });
 
-        AlertDialog dialog = builder.create();
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+        {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                String selectedItem = (String) parent.getItemAtPosition(position);
+                // 롱클릭 이벤트 처리
+                if (listener != null) {
+                    listener.onItemLongClick(selectedItem);
+                }
+                return false;
+            }
+        });
+
+        dialog = builder.create();
         dialog.show();
     }
 
@@ -80,5 +96,12 @@ public class RootDialog
     public interface DialogListener
     {
         void onItemClick(String selectedItem);
+        void onItemLongClick(String selectedItem);
+    }
+
+    public void dismissDialog(){
+        if (dialog != null && dialog.isShowing()){
+            dialog.dismiss();
+        }
     }
 }
