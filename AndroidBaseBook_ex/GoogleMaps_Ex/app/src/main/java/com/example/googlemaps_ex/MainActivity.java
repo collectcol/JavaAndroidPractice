@@ -55,9 +55,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private Menu mRootMenu;
     GoogleMap gMap;
-    MapFragment mapFrag;
     LatLng currentLocation;
-    Marker currentMarker;
     List<Marker> markerList = new ArrayList<>();
     private SharedPreferences sharedPreferences;
     private String currentRoot;
@@ -71,8 +69,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         sharedPreferences = getSharedPreferences(ROOT_NAME, MODE_PRIVATE);
         if ( sharedPreferences == null )
         {
-            // SharedPreferences가 null이면 새로 생성
-//            sharedPreferences = getSharedPreferences(ROOT_NAME, MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(ROOT_NAME, ""); // 기본값으로 빈 문자열 설정
             editor.apply();
@@ -93,8 +89,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             // 위치 권한이 이미 승인된 경우
             getLastKnownLocationAndMoveCamera();
         }
-        Button searchButton = (Button) findViewById(R.id.searchButton);
-        EditText searchEditText = (EditText )findViewById(R.id.searchEditText);
+        Button searchButton = ( Button ) findViewById(R.id.searchButton);
+        EditText searchEditText = ( EditText ) findViewById(R.id.searchEditText);
 
         searchButton.setOnClickListener(new View.OnClickListener()
         {
@@ -111,7 +107,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event)
             {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                if ( actionId == EditorInfo.IME_ACTION_SEARCH )
+                {
                     // 사용자가 입력한 검색어 가져오기
                     String locationName = searchEditText.getText().toString();
                     // 사용자가 입력한 검색어를 가지고 해당 위치로 이동하는 함수 호출
@@ -124,24 +121,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     // 사용자가 검색한 장소의 주소를 가져와서 해당 장소로 이동하는 메소드
-    private void moveCameraToSearchedLocation(String locationName) {
+    private void moveCameraToSearchedLocation(String locationName)
+    {
         // Geocoder를 사용하여 주소를 좌표로 변환
         Geocoder geocoder = new Geocoder(this);
-        try {
+        try
+        {
             // 주소로부터 좌표 목록을 가져옴
             List<Address> addresses = geocoder.getFromLocationName(locationName, 1);
-            if (addresses != null && !addresses.isEmpty()) {
+            if ( addresses != null && ! addresses.isEmpty() )
+            {
                 Address address = addresses.get(0);
                 LatLng location = new LatLng(address.getLatitude(), address.getLongitude());
                 // 해당 좌표로 지도 이동
                 gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, gMap.getCameraPosition().zoom)); // 줌 레벨 조절 가능
                 // 해당 위치에 마커 추가
-//                gMap.addMarker(new MarkerOptions().position(location).title(locationName));
-            } else {
+            } else
+            {
                 // 검색된 결과가 없는 경우 처리
                 Toast.makeText(this, "검색된 결과가 없습니다.", Toast.LENGTH_SHORT).show();
             }
-        } catch (Exception e) {
+        } catch ( Exception e )
+        {
             e.printStackTrace();
             // 예외 발생 시 처리
             Toast.makeText(this, "검색에 실패했습니다.", Toast.LENGTH_SHORT).show();
@@ -208,17 +209,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     {
         if ( gMap != null )
         {
-//            // 기존 마커 제거
-//            if ( currentMarker != null )
-//                currentMarker.remove();
-//
-//            // 새로운 마커 추가
-//            MarkerOptions markerOptions = new MarkerOptions();
-//            markerOptions.position(currentLocation);
-//            markerOptions.title("나");
-//            markerOptions.snippet("현재위치");
-//            currentMarker = gMap.addMarker(markerOptions);
-
             gMap.setMyLocationEnabled(true);
         }
     }
@@ -497,15 +487,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             {
                 String title = markerTitle.getText().toString();
                 String description = markerDescription.getText().toString();
-                if(title.isEmpty()){
+                if ( title.isEmpty() )
+                {
                     Toast.makeText(MainActivity.this, "장소를 입력해 주세요", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (description.isEmpty()){
+                if ( description.isEmpty() )
+                {
                     Toast.makeText(MainActivity.this, "설명을 입력해 주세요", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                
+
                 addMarkerToMap(latLng, title, description);
             }
         });
@@ -570,18 +562,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             editor.putString(root, markersInRoot);
             editor.apply();
-//            JSONArray _markerDatas;
-//            if ( markersInRoot.isEmpty() )
-//            {
-//                _markerDatas = new JSONArray();
-//            } else
-//            {
-//                _markerDatas = new JSONArray(markersInRoot);
-//            }
-//
-//            _markerDatas.put(markerTitle);
-//            editor.putString(root, _markerDatas.toString());
-//            editor.apply();
         } catch ( Exception e )
         {
 
@@ -640,7 +620,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(DialogInterface dialog, int which)
             {
                 // 사용자가 확인을 선택하면 마커를 삭제
-
                 String markerTitle = marker.getTitle();
                 String markerInRoot = sharedPreferences.getString(currentRoot, "");
 
@@ -719,11 +698,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // 1. 해당 마커 타이틀을 변수에 저장
                 String beforeMarkerTitle = marker.getTitle();
 
-                if ( updateMarkerTitle.isEmpty() ){
+                if ( updateMarkerTitle.isEmpty() )
+                {
                     Toast.makeText(MainActivity.this, "장소를 입력해 주세요", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (updateMarkerDescription.isEmpty()){
+                if ( updateMarkerDescription.isEmpty() )
+                {
                     Toast.makeText(MainActivity.this, "설명을 입력해 주세요", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -779,8 +760,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 dialog.dismiss();
             }
         });
-
         builder.create().show();
-
     }
 }
