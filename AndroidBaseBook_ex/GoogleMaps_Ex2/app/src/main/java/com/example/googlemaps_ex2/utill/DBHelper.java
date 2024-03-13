@@ -1,39 +1,49 @@
 package com.example.googlemaps_ex2.utill;
 
+import static com.example.googlemaps_ex2.view.MainActivity.ROOT_NAME;
+
+import android.content.Context;
 import android.content.SharedPreferences;
 
-import androidx.appcompat.app.AppCompatActivity;
+import com.google.gson.Gson;
 
-import com.example.googlemaps_ex2.Global;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-
-public class DBHelper extends AppCompatActivity
+public class DBHelper
 {
-    private Global GlobalContext;
-    private static SharedPreferences sharedPreferences;
+    private Context context;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+    private Gson gson;
 
-    public DBHelper()
+    public DBHelper(Context context)
     {
-        this.GlobalContext = ( Global ) getApplicationContext();
-        sharedPreferences = GlobalContext.getSharedPreferences(GlobalContext.ROOT_NAME, MODE_PRIVATE);
+        this.context = context;
+        sharedPreferences = context.getSharedPreferences(ROOT_NAME, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        gson = new Gson();
+
     }
 
-    public static JSONArray getJSONArray(String key)
+    public Object SharedSelect(String key, Object val)
     {
-        try
+        String v = sharedPreferences.getString(key, "");
+        Object o = null;
+        if ( ! v.isEmpty() )
         {
-            String v = sharedPreferences.getString(key, "");
-            if ( ! v.isEmpty() )
-            {
-                JSONArray array = new JSONArray(v);
-
-            }
-        } catch ( Exception e )
-        {
-
+            o = gson.fromJson(v, ( Class ) val);
         }
-        return new JSONArray();
+        return o;
+    }
+
+    public void SharedInsert(String key, Object o)
+    {
+        String json = gson.toJson(o);
+
+        editor.putString(key, json);
+        editor.apply();
+    }
+
+    public void SharedUpdate(String key)
+    {
+        String v = sharedPreferences.getString(key, "");
     }
 }

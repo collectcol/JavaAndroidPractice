@@ -4,10 +4,12 @@ import androidx.annotation.NonNull;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.List;
+
 public class Root
 {
     private String RootName;
-    private Marker[] Marker;
+    private List<Marker> Marker;
 
     public String getRootName()
     {
@@ -19,12 +21,12 @@ public class Root
         RootName = rootName;
     }
 
-    public Root.Marker[] getMarker()
+    public List<Root.Marker> getMarker()
     {
         return Marker;
     }
 
-    public void setMarker(Root.Marker[] marker)
+    public void setMarker(List<Root.Marker> marker)
     {
         Marker = marker;
     }
