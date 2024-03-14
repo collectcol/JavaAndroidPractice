@@ -1,18 +1,25 @@
 package com.example.googlemaps_ex2.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParentRoot
 {
-    private List<Root> ChildRoots;
+    private ArrayList<Root> RootList;
 
-    public List<Root> getChildRoots()
+    public ArrayList<Root> getRootList()
     {
-        return ChildRoots;
+        if (RootList == null){
+            RootList = new ArrayList<Root>();
+        }
+        return RootList;
     }
 
-    public void setChildRoots(List<Root> childRoots)
+    public void setRootList(ArrayList<Root> rootList)
     {
-        ChildRoots = childRoots;
+        if (RootList == null){
+            RootList = new ArrayList<Root>();
+        }
+        RootList = rootList;
     }
 }

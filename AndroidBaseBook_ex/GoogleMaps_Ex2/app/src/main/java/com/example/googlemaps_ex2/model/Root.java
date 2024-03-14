@@ -1,15 +1,15 @@
 package com.example.googlemaps_ex2.model;
 
-import androidx.annotation.NonNull;
-
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Root
 {
-    private String RootName;
-    private List<Marker> Marker;
+    private String RootName = "";
+    private ArrayList<Marker> MarkerList;
 
     public String getRootName()
     {
@@ -21,48 +21,19 @@ public class Root
         RootName = rootName;
     }
 
-    public List<Root.Marker> getMarker()
+    public ArrayList<Marker> getMarkerList()
     {
-        return Marker;
+        if (MarkerList == null){
+            MarkerList = new ArrayList<Marker>();
+        }
+        return MarkerList;
     }
 
-    public void setMarker(List<Root.Marker> marker)
+    public void setMarkerList(ArrayList<Marker> markerList)
     {
-        Marker = marker;
-    }
-
-    class Marker{
-        private String MarkerName;
-        private String MarkerSnippet;
-        private LatLng MarkerLatLng;
-        public String getMarkerName()
-        {
-            return MarkerName;
+        if (MarkerList == null){
+            MarkerList = new ArrayList<Marker>();
         }
-
-        public void setMarkerName(String markerName)
-        {
-            MarkerName = markerName;
-        }
-
-        public String getMarkerSnippet()
-        {
-            return MarkerSnippet;
-        }
-
-        public void setMarkerSnippet(String markerSnippet)
-        {
-            MarkerSnippet = markerSnippet;
-        }
-
-        public LatLng getMarkerLatLng()
-        {
-            return MarkerLatLng;
-        }
-
-        public void setMarkerLatLng(LatLng markerLatLng)
-        {
-            MarkerLatLng = markerLatLng;
-        }
+        MarkerList = markerList;
     }
 }

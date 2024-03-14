@@ -7,14 +7,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,7 +40,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings( "deprecation" )
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener
 {
     public static final String ROOT_NAME = "";
@@ -51,8 +49,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DBHelper dbHelper;
     private LatLng currentLatLng;
     private GoogleMap gMap;
-    private String currentRoot;
-    private List<Marker> currentMarker;
+    private String currentRoot = "";
+    private Root r = new Root();
+
+    ArrayList<Marker> currentMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -102,13 +102,53 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    protected void onResume()
+    {
+        super.onResume();
+//        permission.permissionCheck();
+//        currentLatLng = permission.currentLatLng;
+    }
+
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap)
+    {
+        gMap = googleMap;
+        gMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+        gMap.setOnMapClickListener(this);
+
+        // InfoWindow 길게 누를시 마커 삭제
+        gMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener()
+        {
+            @Override
+            public void onInfoWindowLongClick(@NonNull Marker marker)
+            {
+//                showMarkerDeleteDialog(marker);
+            }
+        });
+
+        // Infowindow 클릭시 마커 수정
+        gMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener()
+        {
+            @Override
+            public void onInfoWindowClick(@NonNull Marker marker)
+            {
+//                showMarkerUpdateDialog(marker);
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if ( requestCode == REQUEST_LOCATION_PERMISSION )
+        {
+            if ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED )
+            {
                 // 위치 권한이 승인된 경우
                 permission.checkLocationPermission(); // 위치 정보 가져오는 메서드 호출
-            } else {
+            } else
+            {
                 // 위치 권한이 거부된 경우
                 Toast.makeText(this, "위치 권한이 필요합니다. 앱을 종료합니다.", Toast.LENGTH_SHORT).show();
                 this.finish(); // 앱 종료
@@ -145,11 +185,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+
     @Override
     public void onMapClick(@NonNull LatLng latLng)
     {
-        ParentRoot pr = (ParentRoot) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
-        if ( pr == null )
+        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+
+        if ( pr.getRootList().size() == 0 )
         {
             Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
             return;
@@ -159,120 +201,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         showDialogToAddMarker(latLng);
     }
 
-    private void showDialogToAddMarker(final LatLng latLng)
-    {
-        MarkerAddDialog markerAddDialog = new MarkerAddDialog(this);
 
-        markerAddDialog.showDialog();
-        markerAddDialog.setListener(new MarkerAddDialog.DialogListener()
-        {
-            @Override
-            public void onPositiveButtonClick(String title, String snippet)
-            {
-                if (title.isEmpty()){
-                    Toast.makeText(MainActivity.this, "장소를 입력해 주세요", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if ( snippet.isEmpty() )
-                {
-                    Toast.makeText(MainActivity.this, "설명을 입력해 주세요", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                addMarkerToMap(latLng, title, snippet);
-            }
-            @Override
-            public void onNegativeButtonClick()
-            {
-
-            }
-        });
-    }
-
-    private void addMarkerToMap(LatLng latLng, String markerTitle, String markerSnippet)
-    {
-        ParentRoot pr = (ParentRoot) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
-        if ( pr == null )
-        {
-            Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if ( menu.getItem(1).getTitle().toString().equals("") )
-        {
-            Toast.makeText(this, "먼저 루트를 선택해 주세요", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        MarkerOptions options = new MarkerOptions();
-        options.title(markerTitle);
-        options.position(latLng);
-        options.snippet(markerSnippet);
-
-        // 맵에 마커 추가하고 List에 마커 추가하기
-        Marker marker = gMap.addMarker(options);
-        currentMarker.add(marker);
-        marker.showInfoWindow();
-        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude + 0.0001, latLng.longitude + 0.0001), gMap.getCameraPosition().zoom));
-
-        String markerData = markerDescription + "|" + latLng;
-        pr.getChildRoots().add()
-
-        // 마커 이름에 마커데이터 추가
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(markerTitle, markerData);
-        editor.apply();
-
-        try
-        {
-            // 해당 루트 불러와서 마커 이름들 json 형식으로 추가저장하기
-            String root = mRootMenu.getItem(0).getTitle().toString();
-            String markersInRoot = sharedPreferences.getString(root, "");
-
-            if ( markersInRoot.isEmpty() )
-            {
-                markersInRoot = markerTitle;
-            } else
-            {
-                markersInRoot = markersInRoot + "|" + markerTitle;
-            }
-
-            editor.putString(root, markersInRoot);
-            editor.apply();
-        } catch ( Exception e )
-        {
-
-        }
-    }
-
-    @Override
-    public void onMapReady(@NonNull GoogleMap googleMap)
-    {
-        gMap = googleMap;
-        gMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
-        gMap.setOnMapClickListener(this);
-
-        // InfoWindow 길게 누를시 마커 삭제
-        gMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener()
-        {
-            @Override
-            public void onInfoWindowLongClick(@NonNull Marker marker)
-            {
-//                showMarkerDeleteDialog(marker);
-            }
-        });
-
-        // Infowindow 클릭시 마커 수정
-        gMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener()
-        {
-            @Override
-            public void onInfoWindowClick(@NonNull Marker marker)
-            {
-//                showMarkerUpdateDialog(marker);
-            }
-        });
-    }
-
+    // region 메뉴관련 로직
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -282,10 +212,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         try
         {
-            ParentRoot parentRoot = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
-            if ( parentRoot != null )
+            ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+
+            if ( pr.getRootList().size() != 0 )
             {
-                menu.getItem(0).setTitle(parentRoot.getChildRoots().get(0).getRootName());
+                menu.getItem(1).setTitle(pr.getRootList().get(0).getRootName());
+                currentRoot = pr.getRootList().get(0).getRootName();
+            } else
+            {
+                menu.getItem(1).setTitle(currentRoot);
             }
         } catch ( Exception e )
         {
@@ -301,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if ( id == R.id.currentLocation )
         {
-            gMap.setMyLocationEnabled(!gMap.isMyLocationEnabled());
+            gMap.setMyLocationEnabled(! gMap.isMyLocationEnabled());
         } else if ( id == R.id.mapType_hybrid )
         {
             gMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
@@ -318,15 +253,82 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else if ( id == R.id.root_add )
         {
             // 클릭시 루트 추가하기
-//            showRootInputDialog();
+            showRootInputDialog();
         }
 
         return super.onOptionsItemSelected(item);
     }
+    // endregion
 
-    private void showRootsDialog(){
-        ParentRoot pr = (ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
-        if(pr == null){
+    // region 루트 관련 로직
+    private void showRootInputDialog()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("루트 설정");
+        builder.setMessage("새로운 루트를 설정해 주세요");
+
+        final EditText input = new EditText(this);
+        builder.setView(input);
+
+        builder.setPositiveButton("추가", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+                String itemName = input.getText().toString();
+                if ( ! itemName.isEmpty() )
+                {
+                    rootAdd(itemName);
+                } else
+                {
+                    Toast.makeText(MainActivity.this, "값을 입력해주세요", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.setNegativeButton("취소", new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+                dialogInterface.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void rootAdd(String rootName)
+    {
+        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        Root r = new Root();
+
+        if ( pr.getRootList().size() != 0 )
+        {
+            for ( int i = 0; i < pr.getRootList().size(); i++ )
+            {
+                if ( pr.getRootList().get(i).getRootName().equals(rootName) )
+                {
+                    Toast.makeText(this, "중복된 루트가 존재합니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        }
+
+        r.setRootName(rootName);
+        pr.getRootList().add(r);
+        dbHelper.SharedInsert(ROOT_NAME, pr);
+        currentRoot = rootName;
+        menu.getItem(1).setTitle(currentRoot);
+
+        // 모든 마커 지우기
+        gMapMarkerClear();
+    }
+
+    private void showRootsDialog()
+    {
+        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        if ( pr.getRootList().size() == 0 )
+        {
             Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -336,11 +338,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int screenHeight = displayMetrics.heightPixels;
         RootDialog rootDialog = new RootDialog(this, screenHeight);
 
-        Root[] rootArray = pr.getChildRoots();
         ArrayList<String> rootNameArray = new ArrayList<>();
 
-        for (int i = 0; i < rootArray.length; i++){
-            rootNameArray.add(rootArray[i].getRootName());
+        for ( int i = 0; i < pr.getRootList().size(); i++ )
+        {
+            rootNameArray.add(pr.getRootList().get(i).getRootName());
         }
 
         rootDialog.showDialog(rootNameArray);
@@ -363,58 +365,80 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
-    private void gMapMarkerClear()
+    // endregion
+
+    // region 마커 관련 로직
+    private void showDialogToAddMarker(final LatLng latLng)
     {
-        for (int i = 0; i<currentMarker.length; i++){
-            currentMarker[i].remove();
-        }
-//        for ( Marker marker : markerList )
-//        {
-//            marker.remove();
-//        }
-        currentMarker = null;
-//        markerList.clear();
+        MarkerAddDialog markerAddDialog = new MarkerAddDialog(this);
+
+        markerAddDialog.showDialog();
+        markerAddDialog.setListener(new MarkerAddDialog.DialogListener()
+        {
+            @Override
+            public void onPositiveButtonClick(String title, String snippet)
+            {
+                if ( title.isEmpty() )
+                {
+                    Toast.makeText(MainActivity.this, "장소를 입력해 주세요", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if ( snippet.isEmpty() )
+                {
+                    Toast.makeText(MainActivity.this, "설명을 입력해 주세요", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                addMarkerToMap(latLng, title, snippet);
+            }
+
+            @Override
+            public void onNegativeButtonClick()
+            {
+
+            }
+        });
     }
 
-    // 루트에 저장된 마커이름을 통해 마커 생성하고 넣기
-//    private void marker_Load(String rootName)
-//    {
-//        String markerInRoot = sharedPreferences.getString(rootName, "");
-//
-//        if ( markerInRoot.isEmpty() )
-//            return;
-//
-//        String[] markerTitles = markerInRoot.split("\\|");
-//
-//        if ( markerTitles.length == 0 )
-//            return;
-//
-//        for ( String markerTitle : markerTitles )
-//        {
-//            if ( sharedPreferences.getString(markerTitle, "").isEmpty() )
-//            {
-//                continue;
-//            }
-//
-//            String markerDatas = sharedPreferences.getString(markerTitle, "");
-//            String[] markerData = markerDatas.split("\\|");
-//
-//            int startIndex = markerData[1].indexOf("(") + 1;
-//            int endIndex = markerData[1].indexOf(")");
-//            String latLngStr = markerData[1].substring(startIndex, endIndex);
-//
-//            String[] latLngParts = latLngStr.split(",");
-//            double latitude = Double.parseDouble(latLngParts[0].trim());
-//            double longitude = Double.parseDouble(latLngParts[1].trim());
-//
-//            MarkerOptions marker = new MarkerOptions()
-//                    .title(markerTitle)
-//                    .snippet(markerData[0])
-//                    .position(new LatLng(latitude, longitude));
-//
-//            Marker _marker = gMap.addMarker(marker);
-//            markerList.add(_marker);
-//            _marker.showInfoWindow();
-//        }
-//    }
+    private void addMarkerToMap(LatLng latLng, String markerTitle, String markerSnippet)
+    {
+        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        if ( pr.getRootList().size() == 0 )
+        {
+            Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if ( menu.getItem(1).getTitle().toString().equals("") )
+        {
+            Toast.makeText(this, "먼저 루트를 선택해 주세요", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        MarkerOptions options = new MarkerOptions();
+        options.title(markerTitle);
+        options.position(latLng);
+        options.snippet(markerSnippet);
+
+        // 맵에 마커 추가하고 Root의 MarkerList에 마커 추가하기
+        Marker marker = gMap.addMarker(options);
+        marker.showInfoWindow();
+//        r.setMarkerValue(marker);
+        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude + 0.0001, latLng.longitude + 0.0001), gMap.getCameraPosition().zoom));
+
+        // 마커 이름에 마커데이터 추가
+        dbHelper.SharedInsert(currentRoot, r);
+    }
+
+    private void gMapMarkerClear()
+    {
+        if (currentMarker != null){
+            for ( int i = 0; i < currentMarker.size(); i++ )
+            {
+                currentMarker.get(i).remove();
+            }
+            currentMarker = null;
+        }
+    }
+    // endregion
 }

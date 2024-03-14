@@ -30,6 +30,12 @@ public class DBHelper
         if ( ! v.isEmpty() )
         {
             o = gson.fromJson(v, ( Class ) val);
+        } else {
+            try {
+                o = ((Class)val).newInstance(); // val을 이용하여 새로운 객체 생성
+            } catch (InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
         }
         return o;
     }
