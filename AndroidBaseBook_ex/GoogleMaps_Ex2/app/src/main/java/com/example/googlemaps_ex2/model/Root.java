@@ -1,15 +1,12 @@
 package com.example.googlemaps_ex2.model;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Root
 {
     private String RootName = "";
-    private ArrayList<Marker> MarkerList;
+    private ArrayList<MarkerInRoot> MarkerList;
 
     public String getRootName()
     {
@@ -21,18 +18,20 @@ public class Root
         RootName = rootName;
     }
 
-    public ArrayList<Marker> getMarkerList()
+    public ArrayList<MarkerInRoot> getMarkerList()
     {
-        if (MarkerList == null){
-            MarkerList = new ArrayList<Marker>();
+        if ( MarkerList == null )
+        {
+            MarkerList = new ArrayList<MarkerInRoot>();
         }
         return MarkerList;
     }
 
-    public void setMarkerList(ArrayList<Marker> markerList)
+    public void setMarkerList(ArrayList<MarkerInRoot> markerList)
     {
-        if (MarkerList == null){
-            MarkerList = new ArrayList<Marker>();
+        if ( MarkerList == null )
+        {
+            MarkerList = new ArrayList<MarkerInRoot>();
         }
         MarkerList = markerList;
     }

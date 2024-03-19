@@ -1,15 +1,16 @@
 package com.example.googlemaps_ex2.view;
 
-import static com.example.googlemaps_ex2.utill.Permission.REQUEST_LOCATION_PERMISSION;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
@@ -23,12 +24,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.googlemaps_ex2.R;
+import com.example.googlemaps_ex2.model.MarkerInRoot;
 import com.example.googlemaps_ex2.model.ParentRoot;
 import com.example.googlemaps_ex2.model.Root;
 import com.example.googlemaps_ex2.utill.DBHelper;
-import com.example.googlemaps_ex2.utill.Permission;
 import com.example.googlemaps_ex2.view.dialog.MarkerAddDialog;
 import com.example.googlemaps_ex2.view.dialog.RootDialog;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -44,15 +50,24 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener
 {
     public static final String ROOT_NAME = "";
-    private Permission permission;
+    private final int REQUEST_LOCATION_PERMISSION = 1;
     private Menu menu;
     private DBHelper dbHelper;
     private LatLng currentLatLng;
     private GoogleMap gMap;
     private String currentRoot = "";
-    private Root r = new Root();
+    private Root r;
+
+
+    private FusedLocationProviderClient fusedLocationProviderClient;
 
     ArrayList<Marker> currentMarker;
+
+    public MainActivity()
+    {
+        r = new Root();
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -66,9 +81,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = ( SupportMapFragment ) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        permission = new Permission(this);
-        permission.permissionCheck();
-        currentLatLng = permission.currentLatLng;
+        this.fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+//        permissionCheck();
+
+//        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
 
         Button searchButton = ( Button ) findViewById(R.id.searchButton);
         EditText searchEditText = ( EditText ) findViewById(R.id.searchEditText);
@@ -101,12 +117,95 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    // region 위치권한 관련 로직
+
+    public void permissionCheck()
+    {
+        // 위치 권한이 허용되어 있는지 확인
+        if ( ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED )
+        {
+            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, REQUEST_LOCATION_PERMISSION);
+        } else
+        {
+            checkLocationPermission();
+        }
+    }
+
+    // 위치 권한 확인 메서드
+    public void checkLocationPermission()
+    {
+        fusedLocationProviderClient.getLastLocation()
+                .addOnSuccessListener(this, location ->
+                {
+                    if ( location != null )
+                    {
+//                        onMapReady(gMap);
+                        currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+                    } else
+                    {
+                        LocationRequest mRequest = LocationRequest.create()
+                                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                                .setInterval(300)
+                                .setFastestInterval(200);
+
+                        LocationCallback mLocationCallback = new LocationCallback()
+                        {
+                            @Override
+                            public void onLocationResult(LocationResult locationResult)
+                            {
+                                if ( locationResult == null )
+                                {
+                                    return;
+                                }
+                                for ( Location location : locationResult.getLocations() )
+                                {
+                                    currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                    fusedLocationProviderClient.removeLocationUpdates(this);
+                                }
+                            }
+                        };
+                        fusedLocationProviderClient.requestLocationUpdates(mRequest, mLocationCallback, null);
+//                        Toast.makeText(this, "현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                    gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
+                })
+                .addOnFailureListener(this, e ->
+                {
+                    Toast.makeText(this, "현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if ( requestCode == REQUEST_LOCATION_PERMISSION )
+        {
+            if ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED )
+            {
+                // 위치 권한이 승인된 경우
+                checkLocationPermission(); // 위치 정보 가져오는 메서드 호출
+            } else
+            {
+                // 위치 권한이 거부된 경우
+                Toast.makeText(this, "위치 권한이 필요합니다. 앱을 종료합니다.", Toast.LENGTH_SHORT).show();
+                this.finish(); // 앱 종료
+//                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+            }
+        }
+    }
+
+    // endregion
+
     @Override
     protected void onResume()
     {
         super.onResume();
-//        permission.permissionCheck();
-//        currentLatLng = permission.currentLatLng;
+//        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
     }
 
     @Override
@@ -135,25 +234,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                showMarkerUpdateDialog(marker);
             }
         });
-    }
+        permissionCheck();
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if ( requestCode == REQUEST_LOCATION_PERMISSION )
-        {
-            if ( grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED )
-            {
-                // 위치 권한이 승인된 경우
-                permission.checkLocationPermission(); // 위치 정보 가져오는 메서드 호출
-            } else
-            {
-                // 위치 권한이 거부된 경우
-                Toast.makeText(this, "위치 권한이 필요합니다. 앱을 종료합니다.", Toast.LENGTH_SHORT).show();
-                this.finish(); // 앱 종료
-            }
-        }
     }
 
     // 사용자가 검색한 장소의 주소를 가져와서 해당 장소로 이동하는 메소드
@@ -354,7 +436,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 menu.getItem(1).setTitle(selectedItem);
                 currentRoot = selectedItem;
                 gMapMarkerClear();
-//                marker_Load(selectedItem);
+                markerLoad(selectedItem);
                 gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
             }
 
@@ -364,6 +446,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         });
+    }
+
+    private void markerLoad(String rootName)
+    {
+        Root r = ( Root ) dbHelper.SharedSelect(rootName, Root.class);
+        ArrayList<MarkerInRoot> markerList = r.getMarkerList();
+
+        for ( int i = 0; i < markerList.size(); i++ )
+        {
+            MarkerOptions options = new MarkerOptions();
+            options.title(markerList.get(i).getTitle());
+            options.position(markerList.get(i).getLatLng());
+            options.snippet(markerList.get(i).getSnippet());
+
+            Marker marker = gMap.addMarker(options);
+            currentMarker.add(marker);
+        }
     }
     // endregion
 
@@ -423,8 +522,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // 맵에 마커 추가하고 Root의 MarkerList에 마커 추가하기
         Marker marker = gMap.addMarker(options);
         marker.showInfoWindow();
+
+        Root r = new Root();
+        MarkerInRoot m = new MarkerInRoot();
+        m.setTitle(markerTitle);
+        m.setLatLng(latLng);
+        m.setSnippet(markerSnippet);
+        m.setIndex(r.getMarkerList().size() + 1);
+
+        r.getMarkerList().add(m);
+        r.setRootName(currentRoot);
+
 //        r.setMarkerValue(marker);
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude + 0.0001, latLng.longitude + 0.0001), gMap.getCameraPosition().zoom));
+
+        // 현재 마커 리스트에 마커 추가
+        currentMarker.add(marker);
 
         // 마커 이름에 마커데이터 추가
         dbHelper.SharedInsert(currentRoot, r);
@@ -432,7 +545,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void gMapMarkerClear()
     {
-        if (currentMarker != null){
+        if ( currentMarker != null )
+        {
             for ( int i = 0; i < currentMarker.size(); i++ )
             {
                 currentMarker.get(i).remove();

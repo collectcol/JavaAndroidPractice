@@ -57,6 +57,9 @@ public class MarkerAddDialog extends AppCompatActivity
                 }
             }
         });
+
+        dialog = builder.create();
+        dialog.show();
     }
     public void setListener(DialogListener listener)
     {
