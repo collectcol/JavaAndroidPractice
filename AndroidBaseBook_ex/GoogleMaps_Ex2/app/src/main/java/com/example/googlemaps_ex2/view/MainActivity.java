@@ -14,6 +14,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng currentLatLng;
     private GoogleMap gMap;
     private String currentRoot = "";
+    private ParentRoot pr;
     private Root r;
 
 
@@ -65,8 +67,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public MainActivity()
     {
+        pr = new ParentRoot();
         r = new Root();
-
+        currentMarker = new ArrayList<Marker>();
     }
 
     @Override
@@ -144,6 +147,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     {
 //                        onMapReady(gMap);
                         currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+                        if ( pr.getRootList().size() != 0 )
+                        {
+                            String rootName = pr.getRootList().get(0).getRootName();
+                            markerLoad(rootName);
+                        }
 
                     } else
                     {
@@ -221,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onInfoWindowLongClick(@NonNull Marker marker)
             {
-//                showMarkerDeleteDialog(marker);
+                showMarkerDeleteDialog(marker);
             }
         });
 
@@ -231,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onInfoWindowClick(@NonNull Marker marker)
             {
-//                showMarkerUpdateDialog(marker);
+                showMarkerUpdateDialog(marker);
             }
         });
         permissionCheck();
@@ -271,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapClick(@NonNull LatLng latLng)
     {
-        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
 
         if ( pr.getRootList().size() == 0 )
         {
@@ -294,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         try
         {
-            ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+            pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
 
             if ( pr.getRootList().size() != 0 )
             {
@@ -381,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void rootAdd(String rootName)
     {
-        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
         Root r = new Root();
 
         if ( pr.getRootList().size() != 0 )
@@ -408,7 +417,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void showRootsDialog()
     {
-        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
         if ( pr.getRootList().size() == 0 )
         {
             Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
@@ -448,9 +457,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+
+    // endregion
+
+    // region 마커 관련 로직
+
     private void markerLoad(String rootName)
     {
-        Root r = ( Root ) dbHelper.SharedSelect(rootName, Root.class);
+        r = ( Root ) dbHelper.SharedSelect(rootName, Root.class);
         ArrayList<MarkerInRoot> markerList = r.getMarkerList();
 
         for ( int i = 0; i < markerList.size(); i++ )
@@ -464,9 +478,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentMarker.add(marker);
         }
     }
-    // endregion
 
-    // region 마커 관련 로직
     private void showDialogToAddMarker(final LatLng latLng)
     {
         MarkerAddDialog markerAddDialog = new MarkerAddDialog(this);
@@ -502,7 +514,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addMarkerToMap(LatLng latLng, String markerTitle, String markerSnippet)
     {
-        ParentRoot pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
+        pr = ( ParentRoot ) dbHelper.SharedSelect(ROOT_NAME, ParentRoot.class);
         if ( pr.getRootList().size() == 0 )
         {
             Toast.makeText(this, "현재 설정된 루트가 없습니다. 먼저 루트를 추가해 주세요", Toast.LENGTH_SHORT).show();
@@ -523,7 +535,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Marker marker = gMap.addMarker(options);
         marker.showInfoWindow();
 
-        Root r = new Root();
         MarkerInRoot m = new MarkerInRoot();
         m.setTitle(markerTitle);
         m.setLatLng(latLng);
@@ -551,8 +562,100 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             {
                 currentMarker.get(i).remove();
             }
-            currentMarker = null;
+            currentMarker.clear();
+//            currentMarker = null;
         }
+    }
+
+    private void showMarkerDeleteDialog(final Marker marker)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("마커를 삭제하시겠습니까?");
+
+        builder.setPositiveButton("확인", (dialog, which) ->
+        {
+            String markerTitle = marker.getTitle();
+            r = ( Root ) dbHelper.SharedSelect(currentRoot, Root.class);
+
+            for ( int i = 0; i < r.getMarkerList().size(); i++ )
+            {
+                if ( r.getMarkerList().get(i).getTitle().equals(markerTitle) )
+                {
+                    // SharedPreferences 업데이트용
+                    r.getMarkerList().remove(i);
+
+                    // 실제 마커 삭제
+                    marker.remove();
+                    currentMarker.remove(marker);
+
+                    dbHelper.SharedInsert(currentRoot, r);
+                    break;
+                }
+            }
+        });
+
+        builder.setNegativeButton("취소", (dialog, which) ->
+        {
+            dialog.dismiss();
+        });
+
+        builder.create().show();
+    }
+
+    private void showMarkerUpdateDialog(final Marker marker)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("마커 수정");
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View dialogView = inflater.inflate(R.layout.marker_update_dialog, null);
+
+        builder.setView(dialogView);
+
+        builder.setPositiveButton("수정", (dialog, which) ->
+        {
+            EditText updateMarkerT = ( EditText ) dialogView.findViewById(R.id.marker_update_title);
+            String updateMarkerTitle = updateMarkerT.getText().toString();
+            EditText updateMarkerD = ( EditText ) dialogView.findViewById(R.id.marker_update_description);
+            String updateMarkerSnippet = updateMarkerD.getText().toString();
+
+            String beforeMarkerTitle = marker.getTitle();
+            if ( updateMarkerTitle.isEmpty() )
+            {
+                Toast.makeText(MainActivity.this, "장소를 입력해 주세요", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ( updateMarkerSnippet.isEmpty() )
+            {
+                Toast.makeText(MainActivity.this, "설명을 입력해 주세요", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            for ( int i = 0; i < r.getMarkerList().size(); i++ )
+            {
+                if ( r.getMarkerList().get(i).getTitle().equals(beforeMarkerTitle) )
+                {
+                    currentMarker.remove(marker);
+
+                    marker.setTitle(updateMarkerTitle);
+                    marker.setSnippet(updateMarkerSnippet);
+
+                    r.getMarkerList().get(i).setTitle(updateMarkerTitle);
+                    r.getMarkerList().get(i).setSnippet(updateMarkerSnippet);
+
+                    dbHelper.SharedInsert(currentRoot, r);
+                    gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(marker.getPosition().latitude + 0.0001, marker.getPosition().longitude + 0.0001), gMap.getCameraPosition().zoom));
+                    break;
+                }
+            }
+        });
+
+        builder.setNegativeButton("취소", (dialog, which) ->
+        {
+            dialog.dismiss();
+        });
+
+        builder.create().show();
     }
     // endregion
 }
