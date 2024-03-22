@@ -8,9 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.googlemaps_ex2.R;
 
@@ -24,6 +29,7 @@ public class RootDialog extends AppCompatActivity
     private ArrayList<String> dataList;
     private DialogListener listener;
     private AlertDialog dialog;
+
     public RootDialog(Context context, int height)
     {
         this.context = context;
@@ -37,45 +43,12 @@ public class RootDialog extends AppCompatActivity
         builder.setTitle("등록된 루트");
 
         LayoutInflater inflater = LayoutInflater.from(context);
-
-        View dialogView = inflater.inflate(R.layout.roots_dialog, null);
+        View dialogView = inflater.inflate(R.layout.roots_dialog_button, null);
         builder.setView(dialogView);
 
-        ListView listView = dialogView.findViewById(R.id.rootList);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, dataList);
+        ListView listView = dialogView.findViewById(R.id.list_textview);
+        RootListAdapter adapter = new RootListAdapter(context, dataList);
         listView.setAdapter(adapter);
-
-        ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = Math.round(mDialogHeight / 4);
-        listView.setLayoutParams(params);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-            {
-                String selectedItem = ( String ) parent.getItemAtPosition(position);
-                if ( listener != null )
-                {
-                    listener.onItemClick(selectedItem);
-                    dismissDialog();
-                }
-            }
-        });
-
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
-        {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
-            {
-                String selectedItem = (String) parent.getItemAtPosition(position);
-                // 롱클릭 이벤트 처리
-                if (listener != null) {
-                    listener.onItemLongClick(selectedItem);
-                }
-                return false;
-            }
-        });
 
         dialog = builder.create();
         dialog.show();
@@ -88,13 +61,81 @@ public class RootDialog extends AppCompatActivity
 
     public interface DialogListener
     {
-        void onItemClick(String selectedItem);
-        void onItemLongClick(String selectedItem);
+        void onTextViewClick(String selectedItem);
+
+        void onButtonUpdate(String selectedItem);
+
+        void onButtonDelete(String selectedItem);
     }
 
-    public void dismissDialog(){
-        if (dialog != null && dialog.isShowing()){
+    public void dismissDialog()
+    {
+        if ( dialog != null && dialog.isShowing() )
+        {
             dialog.dismiss();
+        }
+    }
+
+    private class RootListAdapter extends ArrayAdapter<String> implements View.OnClickListener
+    {
+        private Context mContext;
+        private ArrayList<String> mDataList;
+
+        public RootListAdapter(Context context, ArrayList<String> dataList)
+        {
+            super(context, R.layout.roots_dialog);
+            this.mContext = context;
+            this.mDataList = dataList;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent)
+        {
+            View rootView = convertView;
+            if ( rootView == null )
+            {
+                LayoutInflater inflater = LayoutInflater.from(mContext);
+                rootView = inflater.inflate(R.layout.roots_dialog_button, parent, false);
+            }
+
+            String item = mDataList.get(position);
+
+            TextView textView = rootView.findViewById(R.id.list_textview);
+            Button updateButton = rootView.findViewById(R.id.btn_update);
+            Button deleteButton = rootView.findViewById(R.id.btn_delete);
+
+            textView.setText(item);
+
+            updateButton.setOnClickListener(this);
+            deleteButton.setOnClickListener(this);
+
+            textView.setTag(position);
+            updateButton.setTag(position);
+            deleteButton.setText(position);
+
+            return rootView;
+        }
+
+        @Override
+        public void onClick(View v)
+        {
+            int position = ( int ) v.getTag();
+            String selectedItem = mDataList.get(position);
+
+            if ( listener != null )
+            {
+                if(v.getId() == R.id.list_textview){
+                    listener.onTextViewClick(selectedItem);
+                }
+                else if ( v.getId() == R.id.btn_update )
+                {
+                    listener.onButtonUpdate(selectedItem);
+                } else if ( v.getId() == R.id.btn_delete )
+                {
+                    listener.onButtonDelete(selectedItem);
+                }
+            }
         }
     }
 }

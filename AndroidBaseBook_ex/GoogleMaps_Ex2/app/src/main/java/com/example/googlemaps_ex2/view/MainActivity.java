@@ -440,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         rootDialog.setListener(new RootDialog.DialogListener()
         {
             @Override
-            public void onItemClick(String selectedItem)
+            public void onTextViewClick(String selectedItem)
             {
                 menu.getItem(1).setTitle(selectedItem);
                 currentRoot = selectedItem;
@@ -450,7 +450,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onItemLongClick(String selectedItem)
+            public void onButtonUpdate(String selectedItem)
+            {
+                final EditText input = new EditText(getApplicationContext());
+
+                // 수정, 삭제 기능 추가
+                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                builder.setMessage("루트 수정 삭제");
+                builder.setView(input);
+
+                builder.setPositiveButton("수정", (dialog, which) ->
+                {
+                    // 루트를 수정하기
+                    String afterRootName = input.getText().toString();
+                    for ( int i = 0; i < pr.getRootList().size(); i++ )
+                    {
+                        if ( pr.getRootList().get(i).getRootName().equals(selectedItem) )
+                        {
+                            pr.getRootList().get(i).setRootName(afterRootName);
+                            dbHelper.SharedInsert(ROOT_NAME, pr);
+
+                            // 새로운 루트에 기존 루트에 해당하는 마커들 할당
+                            Root r1 = (Root) dbHelper.SharedSelect(selectedItem, Root.class);
+                            Root r2 = new Root();
+
+                            r2.setRootName(afterRootName);
+                            r2.setMarkerList(r1.getMarkerList());
+
+                            // 기존 루트 삭제
+                            dbHelper.SharedDelete(selectedItem);
+
+                            // 새로운 루트 추가
+                            dbHelper.SharedInsert(afterRootName, r2);
+                        }
+                    }
+
+                });
+            }
+
+            @Override
+            public void onButtonDelete(String selectedItem)
             {
 
             }
@@ -635,7 +674,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             {
                 if ( r.getMarkerList().get(i).getTitle().equals(beforeMarkerTitle) )
                 {
-                    currentMarker.remove(marker);
+                    currentMarker.get(i).setTitle(updateMarkerTitle);
+                    currentMarker.get(i).setSnippet(updateMarkerSnippet);
 
                     marker.setTitle(updateMarkerTitle);
                     marker.setSnippet(updateMarkerSnippet);

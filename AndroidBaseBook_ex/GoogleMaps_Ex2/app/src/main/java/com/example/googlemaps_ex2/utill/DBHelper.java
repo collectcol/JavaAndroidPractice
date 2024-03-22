@@ -48,8 +48,8 @@ public class DBHelper
         editor.apply();
     }
 
-    public void SharedUpdate(String key)
-    {
-        String v = sharedPreferences.getString(key, "");
+    public void SharedDelete(String key){
+        editor.remove(key);
+        editor.apply();
     }
 }
