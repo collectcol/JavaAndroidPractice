@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings( "deprecation" )
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, RootDialog.DialogClickListener
 {
     public static final String ROOT_NAME = "";
     private final int REQUEST_LOCATION_PERMISSION = 1;
@@ -427,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         int screenHeight = displayMetrics.heightPixels;
-        RootDialog rootDialog = new RootDialog(this, screenHeight);
+
 
         ArrayList<String> rootNameArray = new ArrayList<>();
 
@@ -436,64 +437,97 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             rootNameArray.add(pr.getRootList().get(i).getRootName());
         }
 
-        rootDialog.showDialog(rootNameArray);
-        rootDialog.setListener(new RootDialog.DialogListener()
-        {
-            @Override
-            public void onTextViewClick(String selectedItem)
-            {
-                menu.getItem(1).setTitle(selectedItem);
-                currentRoot = selectedItem;
-                gMapMarkerClear();
-                markerLoad(selectedItem);
-                gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
-            }
+        RootDialog rootDialog = new RootDialog(rootNameArray, screenHeight);
 
-            @Override
-            public void onButtonUpdate(String selectedItem)
-            {
-                final EditText input = new EditText(getApplicationContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("루트 목록");
+        ListView listView = new ListView(this);
+        listView.setAdapter(rootDialog);
+        builder.setView(listView);
 
-                // 수정, 삭제 기능 추가
-                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                builder.setMessage("루트 수정 삭제");
-                builder.setView(input);
+        AlertDialog dialog = builder.create();
+        dialog.show();
 
-                builder.setPositiveButton("수정", (dialog, which) ->
-                {
-                    // 루트를 수정하기
-                    String afterRootName = input.getText().toString();
-                    for ( int i = 0; i < pr.getRootList().size(); i++ )
-                    {
-                        if ( pr.getRootList().get(i).getRootName().equals(selectedItem) )
-                        {
-                            pr.getRootList().get(i).setRootName(afterRootName);
-                            dbHelper.SharedInsert(ROOT_NAME, pr);
+//        rootDialog.showDialog(rootNameArray);
+//        rootDialog.setListener(new RootDialog.DialogListener()
+//        {
+//            @Override
+//            public void onTextViewClick(String selectedItem)
+//            {
+//                menu.getItem(1).setTitle(selectedItem);
+//                currentRoot = selectedItem;
+//                gMapMarkerClear();
+//                markerLoad(selectedItem);
+//                gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
+//            }
+//
+//            @Override
+//            public void onButtonUpdate(String selectedItem)
+//            {
+//                final EditText input = new EditText(getApplicationContext());
+//
+//                // 수정, 삭제 기능 추가
+//                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+//                builder.setMessage("루트 수정 삭제");
+//                builder.setView(input);
+//
+//                builder.setPositiveButton("수정", (dialog, which) ->
+//                {
+//                    // 루트를 수정하기
+//                    String afterRootName = input.getText().toString();
+//                    for ( int i = 0; i < pr.getRootList().size(); i++ )
+//                    {
+//                        if ( pr.getRootList().get(i).getRootName().equals(selectedItem) )
+//                        {
+//                            pr.getRootList().get(i).setRootName(afterRootName);
+//                            dbHelper.SharedInsert(ROOT_NAME, pr);
+//
+//                            // 새로운 루트에 기존 루트에 해당하는 마커들 할당
+//                            Root r1 = (Root) dbHelper.SharedSelect(selectedItem, Root.class);
+//                            Root r2 = new Root();
+//
+//                            r2.setRootName(afterRootName);
+//                            r2.setMarkerList(r1.getMarkerList());
+//
+//                            // 기존 루트 삭제
+//                            dbHelper.SharedDelete(selectedItem);
+//
+//                            // 새로운 루트 추가
+//                            dbHelper.SharedInsert(afterRootName, r2);
+//                        }
+//                    }
+//
+//                });
+//            }
+//
+//            @Override
+//            public void onButtonDelete(String selectedItem)
+//            {
+//
+//            }
+//        });
+    }
 
-                            // 새로운 루트에 기존 루트에 해당하는 마커들 할당
-                            Root r1 = (Root) dbHelper.SharedSelect(selectedItem, Root.class);
-                            Root r2 = new Root();
+    @Override
+    public void onButtonChoice(String selectedItem)
+    {
+        menu.getItem(1).setTitle(selectedItem);
+        currentRoot = selectedItem;
+        gMapMarkerClear();
+        markerLoad(selectedItem);
+        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
+    }
 
-                            r2.setRootName(afterRootName);
-                            r2.setMarkerList(r1.getMarkerList());
+    @Override
+    public void onButtonUpdate(String selectedItem)
+    {
 
-                            // 기존 루트 삭제
-                            dbHelper.SharedDelete(selectedItem);
+    }
 
-                            // 새로운 루트 추가
-                            dbHelper.SharedInsert(afterRootName, r2);
-                        }
-                    }
+    @Override
+    public void onButtonDelete(String selectedItem)
+    {
 
-                });
-            }
-
-            @Override
-            public void onButtonDelete(String selectedItem)
-            {
-
-            }
-        });
     }
 
 
