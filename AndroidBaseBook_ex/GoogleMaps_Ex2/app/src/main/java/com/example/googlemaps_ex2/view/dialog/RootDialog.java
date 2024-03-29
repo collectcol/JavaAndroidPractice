@@ -16,45 +16,12 @@ import java.util.ArrayList;
 
 public class RootDialog extends BaseAdapter
 {
-    //    private Context context;
-//    private int mDialogHeight;
-//    private ArrayList<String> dataList;
-//    private DialogListener listener;
-//    private AlertDialog dialog;
-//
-//    public RootDialog(Context context, int height)
-//    {
-//        this.context = context;
-//        this.mDialogHeight = height;
-//    }
-//
-//    public void showDialog(ArrayList<String> dataList)
-//    {
-//        this.dataList = dataList;
-//        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-//        builder.setTitle("등록된 루트");
-//
-//        LayoutInflater inflater = LayoutInflater.from(context);
-//        View dialogView = inflater.inflate(R.layout.roots_dialog_button, null);
-//
-//
-//        ListView listView = dialogView.findViewById(R.id.list_textview);
-//        RootListAdapter adapter = new RootListAdapter(context, dataList);
-//        listView.setAdapter(adapter);
-//
-//        dialog = builder.create();
-//        dialog.show();
-//    }
-//
-//    public void setListener(DialogListener listener)
-//    {
-//        this.listener = listener;
-//    }
     LayoutInflater inflater = null;
     private ArrayList<String> arrayList = null;
     private int mListCnt = 0;
     private int mDialogHeight;
     private DialogClickListener dialogClickListener;
+    private Dialog dialog;
 
     public interface DialogClickListener
     {
@@ -65,10 +32,12 @@ public class RootDialog extends BaseAdapter
         void onButtonDelete(String selectedItem);
     }
 
-    public RootDialog(ArrayList<String> data, int dialogHeight)
+    public RootDialog(ArrayList<String> data, int dialogHeight, DialogClickListener dialogClickListener, Dialog dialog)
     {
         arrayList = data;
         mListCnt = arrayList.size();
+        this.dialogClickListener = dialogClickListener;
+        this.dialog = dialog;
     }
 
     @Override
@@ -116,6 +85,7 @@ public class RootDialog extends BaseAdapter
                 if ( dialogClickListener != null )
                 {
                     dialogClickListener.onButtonChoice(selectedItem);
+                    dialog.dismiss();
                 }
             }
         });
@@ -128,7 +98,9 @@ public class RootDialog extends BaseAdapter
                 String selectedItem = arrayList.get(position);
                 if ( dialogClickListener != null )
                 {
+                    dialog.dismiss();
                     dialogClickListener.onButtonUpdate(selectedItem);
+
                 }
             }
         });
@@ -141,6 +113,7 @@ public class RootDialog extends BaseAdapter
                 String selectedItem = arrayList.get(position);
                 if ( dialogClickListener != null )
                 {
+                    dialog.dismiss();
                     dialogClickListener.onButtonDelete(selectedItem);
                 }
             }
@@ -148,84 +121,4 @@ public class RootDialog extends BaseAdapter
         rootName.setText(arrayList.get(position));
         return convertView;
     }
-
-//    public interface DialogListener
-//    {
-//        void onTextViewClick(String selectedItem);
-//
-//        void onButtonUpdate(String selectedItem);
-//
-//        void onButtonDelete(String selectedItem);
-//    }
-//
-//    public void dismissDialog()
-//    {
-//        if ( dialog != null && dialog.isShowing() )
-//        {
-//            dialog.dismiss();
-//        }
-//    }
-//
-//    private class RootListAdapter extends ArrayAdapter<String> implements View.OnClickListener
-//    {
-//        private Context mContext;
-//        private ArrayList<String> mDataList;
-//
-//        public RootListAdapter(Context context, ArrayList<String> dataList)
-//        {
-//            super(context, R.layout.roots_dialog);
-//            this.mContext = context;
-//            this.mDataList = dataList;
-//        }
-//
-//        @NonNull
-//        @Override
-//        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent)
-//        {
-//            View rootView = convertView;
-//            if ( rootView == null )
-//            {
-//                LayoutInflater inflater = LayoutInflater.from(mContext);
-//                rootView = inflater.inflate(R.layout.roots_dialog_button, parent, false);
-//            }
-//
-//            String item = mDataList.get(position);
-//
-//            TextView textView = rootView.findViewById(R.id.list_textview);
-//            Button updateButton = rootView.findViewById(R.id.btn_update);
-//            Button deleteButton = rootView.findViewById(R.id.btn_delete);
-//
-//            textView.setText(item);
-//
-//            updateButton.setOnClickListener(this);
-//            deleteButton.setOnClickListener(this);
-//
-//            textView.setTag(position);
-//            updateButton.setTag(position);
-//            deleteButton.setText(position);
-//
-//            return rootView;
-//        }
-//
-//        @Override
-//        public void onClick(View v)
-//        {
-//            int position = ( int ) v.getTag();
-//            String selectedItem = mDataList.get(position);
-//
-//            if ( listener != null )
-//            {
-//                if(v.getId() == R.id.list_textview){
-//                    listener.onTextViewClick(selectedItem);
-//                }
-//                else if ( v.getId() == R.id.btn_update )
-//                {
-//                    listener.onButtonUpdate(selectedItem);
-//                } else if ( v.getId() == R.id.btn_delete )
-//                {
-//                    listener.onButtonDelete(selectedItem);
-//                }
-//            }
-//        }
-//    }
 }
